@@ -85,7 +85,7 @@
       </div>
     </div>
   </div>
-  <div v-if="result" class="image-list">
+  <div v-if="result" class="image-content">
     <div class="table-header">
       <div class="header-item">編號</div>
       <div class="header-item">圖片</div>
@@ -94,20 +94,26 @@
       <div class="header-item">圖片來源</div>
       <div class="header-item">功能</div>
     </div>
-    <div class="image" v-for="image in filteredImages" :key="image.id">
+    <div class="image-main" v-for="image in filteredImages" :key="image.id">
       <div class="item">{{ image.id }}</div>
       <div class="item"><img :src="image.url" :alt="image.name" /></div>
       <div class="item">{{ image.content }}</div>
       <div class="item">{{ image.date }}</div>
       <div class="item">{{ image.from }}</div>
       <div class="item">
-        <button @click="someFunction(image.id)">預覽</button>
-        <button @click="someFunction(image.id)">下載</button>
-        <button @click="someFunction(image.id)">複製</button>
+        <button class="item-btn" @click="previewImage(image.url)">預覽</button>
+        <button class="item-btn" @click="downloadImage(image.url)">下載</button>
+        <button class="item-btn" @click="someFunction(image.id)">複製</button>
       </div>
     </div>
     <div v-if="searchTerm">
       <p>沒有找到相關圖片。</p>
+    </div>
+  </div>
+  <div v-if="isPreviewVisible" class="modal">
+    <div class="modal-content">
+      <span class="close" @click="isPreviewVisible = false">&times;</span>
+      <img :src="previewImageUrl" alt="預覽" />
     </div>
   </div>
 </template>
@@ -117,6 +123,32 @@ import { ref, computed } from "vue";
 import { images } from "../../server/api/api";
 
 export default {
+  data() {
+    return {
+      isPreviewVisible: false, // 控制預覽模態框的顯示
+      previewImageUrl: "", // 預覽的圖片 URL
+    };
+  },
+  methods: {
+    previewImage(url) {
+      this.previewImageUrl = url; // 設置預覽圖片的 URL
+      this.isPreviewVisible = true; // 顯示預覽模態框
+    },
+    downloadImage(url) {
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = url.split("/").pop(); // 下載時使用圖片的名稱
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link); // 下載後移除連結
+    },
+    copyToClipboard(url) {
+      navigator.clipboard.writeText(url).then(() => {
+        alert("圖片 URL 已複製到剪貼簿！");
+      });
+    },
+  },
+
   setup() {
     const searchTerm = ref("");
     const selectedSources = ref({
@@ -178,8 +210,8 @@ export default {
 .image-list {
   display: flex;
   align-items: center;
-  flex-direction: column;
-  flex-wrap: wrap;
+  flex-direction: row;
+  flex-wrap: nowrap;
   .image {
     display: flex;
     flex: 0 1 30%;
@@ -192,12 +224,7 @@ export default {
       height: auto;
     }
   }
-  .table-header {
-    display: flex;
-    align-items: center;
-    font-weight: bold;
-    background-color: #f0f0f0;
-  }
+
   h2 {
     width: 50%;
     margin: 0;
@@ -254,8 +281,61 @@ export default {
     height: 10px;
   }
 }
-// .image {
-//   display: flex;
-//   align-items: center;
-// }
+.image-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  .image-main {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
+    .item {
+      flex: 1;
+      display: flex;
+      text-align: center;
+      img {
+        width: 100%;
+      }
+    }
+    .item-btn {
+      margin-right: 1em;
+      font-size: 12px;
+    }
+  }
+  .table-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    font-weight: bold;
+  }
+}
+
+.modal {
+  display: flex;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: #fa0;
+  padding: 20px;
+  border-radius: 5px;
+  position: relative;
+}
+
+.close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  cursor: pointer;
+  font-size: 100px;
+}
 </style>
