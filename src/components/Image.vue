@@ -119,17 +119,26 @@
 </template>
 
 <script>
-import { ref, computed } from "vue";
-import { images } from "../../server/api/api";
+import { ref, computed, onMounted } from "vue";
 
 export default {
   data() {
     return {
+      images: [],
       isPreviewVisible: false, // 控制預覽模態框的顯示
       previewImageUrl: "", // 預覽的圖片 URL
     };
   },
   methods: {
+    async fetchImages() {
+      try {
+        const response = await fetch("/images.json"); // 載入 JSON 資料
+        const data = await response.json();
+        this.images = data; // 將資料儲存到 images
+      } catch (error) {
+        console.error("無法載入圖片資料:", error);
+      }
+    },
     previewImage(url) {
       this.previewImageUrl = url; // 設置預覽圖片的 URL
       this.isPreviewVisible = true; // 顯示預覽模態框
@@ -162,8 +171,11 @@ export default {
       program: false,
       company: false,
     });
+
+    const images = ref([]);
+
     const filteredImages = computed(() => {
-      return images
+      return images.value
         .filter((image) => {
           const matchesSearchTerm = image.name
             .toLowerCase()
@@ -195,8 +207,19 @@ export default {
       selectedSources.value.company = selectedSources.value.all;
     };
 
+    onMounted(async () => {
+      try {
+        const response = await fetch("/images.json");
+        const data = await response.json();
+        images.value = data;
+      } catch (error) {
+        console.error("無法載入圖片資料:", error);
+      }
+    });
+
     return {
       searchTerm,
+      images,
       filteredImages,
       result,
       toggleSelectAll,
