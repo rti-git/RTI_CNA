@@ -1,115 +1,27 @@
 <template>
-  <div class="image-list">
-    <h2>RTI新聞圖片</h2>
-    <div class="title">
-      <input v-model="searchTerm" class="int" placeholder="搜尋圖片名稱" />
-      <div class="label-grid">
-        <div class="col">
-          <div class="label">
-            <input
-              type="checkbox"
-              v-model="selectedSources.all"
-              @change="toggleSelectAll"
-            />
-            <label for="first-col">全選</label>
-          </div>
-        </div>
-        <div class="col">
-          <div class="label">
-            <input
-              type="checkbox"
-              v-model="selectedSources.rti"
-              :disabled="selectedSources.all"
-            />
-            <label for="first-col">Rti央廣</label>
-          </div>
-          <div class="label">
-            <input
-              type="checkbox"
-              v-model="selectedSources.cna"
-              :disabled="selectedSources.all"
-            />
-            <label for="first-col">CNA中央社</label>
-          </div>
-          <div class="label">
-            <input
-              type="checkbox"
-              v-model="selectedSources.ap"
-              :disabled="selectedSources.all"
-            />
-            AP美聯社
-          </div>
-          <div class="label">
-            <input
-              type="checkbox"
-              v-model="selectedSources.afp"
-              :disabled="selectedSources.all"
-            />
-            AFP法新社
-          </div>
-        </div>
-        <div class="col">
-          <div class="label">
-            <input
-              type="checkbox"
-              v-model="selectedSources.reuters"
-              :disabled="selectedSources.all"
-            />
-            路透社
-          </div>
-          <div class="label">
-            <input
-              type="checkbox"
-              v-model="selectedSources.others"
-              :disabled="selectedSources.all"
-            />
-            其他
-          </div>
-          <div class="label">
-            <input
-              type="checkbox"
-              v-model="selectedSources.program"
-              :disabled="selectedSources.all"
-            />
-            節目
-          </div>
-          <div class="label">
-            <input
-              type="checkbox"
-              v-model="selectedSources.company"
-              :disabled="selectedSources.all"
-            />
-            公企
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div v-if="result" class="image-content">
-    <div class="table-header">
-      <div class="header-item">編號</div>
-      <div class="header-item">圖片</div>
-      <div class="header-item">說明</div>
-      <div class="header-item">建立時間</div>
-      <div class="header-item">圖片來源</div>
-      <div class="header-item">功能</div>
-    </div>
-    <div class="image-main" v-for="image in filteredImages" :key="image.id">
-      <div class="item">{{ image.id }}</div>
-      <div class="item"><img :src="image.url" :alt="image.name" /></div>
-      <div class="item">{{ image.content }}</div>
-      <div class="item">{{ image.date }}</div>
-      <div class="item">{{ image.from }}</div>
-      <div class="item">
-        <button class="item-btn" @click="previewImage(image.url)">預覽</button>
-        <button class="item-btn" @click="downloadImage(image.url)">下載</button>
-        <button class="item-btn" @click="someFunction(image.id)">複製</button>
-      </div>
-    </div>
-    <div v-if="searchTerm">
-      <p>沒有找到相關圖片。</p>
-    </div>
-  </div>
+  <SearchList
+    :searchTerm="searchTerm"
+    :selectedSources="selectedSources"
+    @search-term-change="updateSearchTerm"
+    @source-change="updateSources"
+  />
+
+  <ImageList
+    :images="paginatedData"
+    :searchTerm="searchTerm"
+    :selectedSources="selectedSources"
+    :itemsPerPage="itemsPerPage"
+    :currentPage="currentPage"
+    @preview="previewImage"
+  />
+
+  <Pagination
+    :current-page="currentPage"
+    :total-pages="totalPages"
+    @update:currentPage="updateCurrentPage"
+  />
+
+  <!-- 預覽模態框 -->
   <div v-if="isPreviewVisible" class="modal">
     <div class="modal-content">
       <span class="close" @click="isPreviewVisible = false">&times;</span>
@@ -120,111 +32,91 @@
 
 <script>
 import { ref, computed, onMounted } from "vue";
+import SearchList from "./SearchList.vue";
+import Pagination from "./Pagination.vue";
+import ImageList from "./ImageList.vue";
 
 export default {
+  components: {
+    SearchList,
+    ImageList,
+    Pagination,
+  },
   data() {
     return {
-      images: [],
-      isPreviewVisible: false, // 控制預覽模態框的顯示
-      previewImageUrl: "", // 預覽的圖片 URL
+      isPreviewVisible: false,
+      previewImageUrl: "",
+      currentPage: 1,
+      itemsPerPage: 5,
+      searchTerm: "",
+      selectedSources: {
+        all: false,
+        rti: false,
+        cna: false,
+        ap: false,
+        afp: false,
+        reuters: false,
+        others: false,
+        program: false,
+        company: false,
+      },
+      images: [], // 假設這裡是你的圖片數據
     };
   },
-  methods: {
-    async fetchImages() {
-      try {
-        const response = await fetch("/images.json"); // 載入 JSON 資料
-        const data = await response.json();
-        this.images = data; // 將資料儲存到 images
-      } catch (error) {
-        console.error("無法載入圖片資料:", error);
-      }
+
+  computed: {
+    totalPages() {
+      return Math.ceil(this.filteredImages.length / this.itemsPerPage);
     },
-    previewImage(url) {
-      this.previewImageUrl = url; // 設置預覽圖片的 URL
-      this.isPreviewVisible = true; // 顯示預覽模態框
-    },
-    downloadImage(url) {
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = url.split("/").pop(); // 下載時使用圖片的名稱
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link); // 下載後移除連結
-    },
-    copyToClipboard(url) {
-      navigator.clipboard.writeText(url).then(() => {
-        alert("圖片 URL 已複製到剪貼簿！");
+    filteredImages() {
+      // 過濾資料根據搜尋條件
+      return this.images.filter((image) => {
+        return image.name.toLowerCase().includes(this.searchTerm.toLowerCase());
       });
     },
+    paginatedData() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      const end = start + this.itemsPerPage;
+      return this.filteredImages.slice(start, end);
+    },
   },
 
-  setup() {
-    const searchTerm = ref("");
-    const selectedSources = ref({
-      all: false,
-      rti: false,
-      cna: false,
-      ap: false,
-      afp: false,
-      reuters: false,
-      others: false,
-      program: false,
-      company: false,
-    });
+  // watch: {
+  //   filteredImages(newData) {
+  //     if (newData.length === 0) return;
+  //     const targetPage = Math.ceil(newData.length / this.itemsPerPage);
 
-    const images = ref([]);
+  //     if (this.currentPage > targetPage) {
+  //       this.currentPage = targetPage;
+  //     }
+  //   },
+  // },
 
-    const filteredImages = computed(() => {
-      return images.value
-        .filter((image) => {
-          const matchesSearchTerm = image.name
-            .toLowerCase()
-            .includes(searchTerm.value.toLowerCase());
-          const matchesSource =
-            selectedSources.value.all ||
-            (selectedSources.value.rti && image.from === "RTI") ||
-            (selectedSources.value.cna && image.from === "CNA") ||
-            (selectedSources.value.ap && image.from === "AP") ||
-            (selectedSources.value.afp && image.from === "AFP") ||
-            (selectedSources.value.program && image.from === "PROGRAM") ||
-            (selectedSources.value.company && image.from === "COMPANY") ||
-            (selectedSources.value.reuters && image.from === "REUTERS") ||
-            (selectedSources.value.others && image.from === "OTHERS");
-          return matchesSearchTerm && matchesSource;
-        })
-        .slice(0, 5);
-    });
-    const result = computed(() => filteredImages.value.length > 0);
+  mounted() {
+    this.fetchImages();
+  },
 
-    const toggleSelectAll = () => {
-      selectedSources.value.rti = selectedSources.value.all;
-      selectedSources.value.cna = selectedSources.value.all;
-      selectedSources.value.ap = selectedSources.value.all;
-      selectedSources.value.afp = selectedSources.value.all;
-      selectedSources.value.program = selectedSources.value.all;
-      selectedSources.value.reuters = selectedSources.value.all;
-      selectedSources.value.others = selectedSources.value.all;
-      selectedSources.value.company = selectedSources.value.all;
-    };
-
-    onMounted(async () => {
-      try {
-        const response = await fetch("/images.json");
-        const data = await response.json();
-        images.value = data;
-      } catch (error) {
-        console.error("無法載入圖片資料:", error);
-      }
-    });
-
-    return {
-      searchTerm,
-      images,
-      filteredImages,
-      result,
-      toggleSelectAll,
-      selectedSources,
-    };
+  methods: {
+    async fetchImages() {
+      const response = await fetch("/images.json");
+      const data = await response.json();
+      this.images = data;
+    },
+    updateCurrentPage(page) {
+      this.currentPage = page;
+    },
+    previewImage(url) {
+      this.previewImageUrl = url;
+      this.isPreviewVisible = true;
+    },
+    updateSearchTerm(newTerm) {
+      this.searchTerm = newTerm;
+      this.currentPage = 1;
+    },
+    updateSources(newSources) {
+      this.selectedSources = newSources;
+      this.currentPage = 1;
+    },
   },
 };
 </script>

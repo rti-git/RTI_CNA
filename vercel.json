@@ -1,0 +1,16 @@
+{
+    "headers": [
+      {
+        "source": "/img/(.*)",
+        "headers": [
+          {
+            "key": "Access-Control-Allow-Origin",
+            "value": "*"
+          }
+        ]
+      }
+    ]
+  }
+  
+  
+  
