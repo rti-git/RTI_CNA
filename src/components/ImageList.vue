@@ -30,12 +30,6 @@
       <p>沒有找到相關圖片。</p>
     </div>
   </div>
-  <!-- <div v-if="isPreviewVisible" class="modal">
-    <div class="modal-content">
-      <span class="close" @click="isPreviewVisible = false">&times;</span>
-      <img :src="previewImageUrl" alt="預覽" />
-    </div>
-  </div> -->
 </template>
 
 <script>
@@ -93,21 +87,51 @@ export default {
 
   methods: {
     previewImage(url) {
-      this.$emit("preview", url); // 發出預覽事件
+      this.$emit("preview", url);
     },
     downloadImage(url) {
       const link = document.createElement("a");
       link.href = url;
-      link.download = url.split("/").pop(); // 下載時使用圖片的名稱
+      link.download = url.split("/").pop();
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link); // 下載後移除連結
+      document.body.removeChild(link);
     },
     copyToClipboard(url) {
-      navigator.clipboard.writeText(url).then(() => {
-        // alert("圖片 URL 已複製到剪貼簿！");
-      });
+      navigator.clipboard.writeText(url).then(() => {});
     },
   },
 };
 </script>
+
+<style lang="scss">
+.image-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  .image-main {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
+    .item {
+      flex: 1;
+      display: flex;
+      text-align: center;
+      img {
+        width: 100%;
+      }
+    }
+    .item-btn {
+      margin-right: 1em;
+      font-size: 12px;
+    }
+  }
+  .table-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    font-weight: bold;
+  }
+}
+</style>

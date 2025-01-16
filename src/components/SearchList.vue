@@ -148,3 +148,80 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+.image-list {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  .image {
+    display: flex;
+    flex: 0 1 30%;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    text-align: center;
+    width: 100%;
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+  }
+
+  h2 {
+    width: 50%;
+    margin: 0;
+  }
+  input {
+    width: 100%;
+    padding: 0.5rem;
+    flex: 2;
+    .title {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+  }
+}
+.label {
+  display: flex;
+  flex-direction: row;
+  // vertical-align: text-top;
+}
+.label-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  height: 100px;
+  width: 800px;
+  flex: 3;
+}
+
+.label:nth-child(1) {
+  grid-column: span 4;
+}
+
+.label:nth-child(2),
+.label:nth-child(3),
+.label:nth-child(4),
+.label:nth-child(5) {
+  grid-row: 2;
+}
+
+.label:nth-child(6),
+.label:nth-child(7),
+.label:nth-child(8),
+.label:nth-child(9) {
+  grid-row: 3;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-direction: row;
+  .int {
+    height: 10px;
+  }
+}
+</style>
